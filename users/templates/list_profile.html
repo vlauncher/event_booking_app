@@ -1,0 +1,12 @@
+<!-- templates/list_profile.html -->
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+    <h1>Your Profile</h1>
+    {% include 'partials/messages.html' %}
+    <div>
+        <strong>Phone Number:</strong> {{ profile.phone_number }}<br>
+        <strong>Address:</strong> {{ profile.address }}<br>
+    </div>
+    <a href="{% url 'update_profile' %}" class="btn btn-primary">Edit Profile</a>
+{% endblock %}
