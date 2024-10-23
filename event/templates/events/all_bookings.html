@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}All Bookings{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4">All Bookings</h2>
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th scope="col">User</th>
+                <th scope="col">Event Name</th>
+                <th scope="col">Event Time</th>
+                <th scope="col">Booked At</th>
+                <th scope="col">Booking Details</th>
+                <th scope="col">Cancel Reason</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td>{{ booking.user.first_name }} {{ booking.user.last_name }}</td>
+                <td>{{ booking.event.name }}</td>
+                <td>{{ booking.event.time }}</td>
+                <td>{{ booking.booked_at }}</td>
+                <td>{{ booking.booking_details }}</td>
+                <td>{{ booking.cancellation_reason|default:'-' }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No bookings found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="mt-4">
+        <h4 class="text-center mb-3">Booking Statistics</h4>
+        <p>Total Bookings: {{ total_bookings }}</p>
+        <p>Total Active Bookings: {{ attending_count }}</p>
+        <p>Total Cancellations: {{ cancelled_bookings }}</p>
+    </div>
+</div>
+{% endblock %}

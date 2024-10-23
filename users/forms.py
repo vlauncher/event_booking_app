@@ -1,107 +1,135 @@
-# users/forms.py
-
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
-from allauth.account.forms import SignupForm as DefaultSignupForm, ChangePasswordForm
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth import authenticate, get_user_model
+from .models import Profile
+
+User = get_user_model()
 
 
-class SignUpForm(DefaultSignupForm):
-    first_name = forms.CharField(max_length=30, required=True)
-    last_name = forms.CharField(max_length=30, required=True)
+class CustomLoginForm(forms.Form):
+    email = forms.EmailField(
+        max_length=255,
+        widget=forms.EmailInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Email",
+                "required": "required",
+            }
+        ),
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Password",
+                "required": "required",
+            }
+        )
+    )
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if 'spam.com' in email:
-            raise ValidationError("Registration from 'spam.com' domain is prohibited.")
-        return email
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get("email")
+        password = cleaned_data.get("password")
 
-    def clean_first_name(self):
-        first_name = self.cleaned_data.get('first_name')
-        if not first_name.isalpha():
-            raise ValidationError("First name should only contain alphabetic characters.")
-        return first_name
+        if email and password:
+            user = authenticate(email=email, password=password)
+            if not user:
+                raise ValidationError("Invalid email or password")
+        return cleaned_data
 
-    def save(self, request):
-        user = super(SignUpForm, self).save(request)
-        user.first_name = self.cleaned_data.get('first_name')
-        user.last_name = self.cleaned_data.get('last_name')
-        user.save()
+    def get_user(self):
+        email = self.cleaned_data.get("email")
+        user = User.objects.filter(email=email).first()
         return user
 
 
-class CustomLoginForm(AuthenticationForm):
-    def confirm_login_allowed(self, user):
-        """Override to implement custom validation on user login."""
-        if not user.is_active:
-            raise forms.ValidationError(_('This account is inactive.'), code='inactive')
+class RegisterForm(forms.ModelForm):
+    password = forms.CharField(
+        label="Password", widget=forms.PasswordInput, min_length=8
+    )
+    confirm_password = forms.CharField(
+        label="Confirm Password", widget=forms.PasswordInput
+    )
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email"]
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("A user with this email already exists.")
+        return email
 
     def clean(self):
-        """Custom clean method to perform additional validations."""
         cleaned_data = super().clean()
-        email = cleaned_data.get('username')  # The 'username' field is the email in your case
-        password = cleaned_data.get('password')
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
 
-        # Add any custom validation here (e.g., check if email is in a specific domain)
-        if email and password:
-            if not email.endswith('@example.com'):
-                raise forms.ValidationError(_('Login is restricted to @example.com emails.'), code='invalid_email')
+        if password and confirm_password and password != confirm_password:
+            raise ValidationError("Passwords do not match.")
 
         return cleaned_data
 
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password"])  # Hash the password
+        if commit:
+            user.save()
+        return user
 
-class CustomPasswordChangeForm(ChangePasswordForm):
-    old_password = forms.CharField(
-        label="Old Password",
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        strip=False,
-        required=True,
+
+class ChangePasswordForm(forms.Form):
+    current_password = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "placeholder": "Current Password"}
+        ),
+        label="Current Password",
     )
-    new_password1 = forms.CharField(
+    new_password = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "placeholder": "New Password"}
+        ),
         label="New Password",
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        strip=False,
-        required=True,
     )
-    new_password2 = forms.CharField(
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "placeholder": "Confirm New Password"}
+        ),
         label="Confirm New Password",
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        strip=False,
-        required=True,
     )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super(ChangePasswordForm, self).__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get("current_password")
+        if not self.user.check_password(current_password):
+            raise ValidationError("Current password is incorrect.")
+        return current_password
 
     def clean(self):
         cleaned_data = super().clean()
-        new_password1 = cleaned_data.get("new_password1")
-        new_password2 = cleaned_data.get("new_password2")
+        new_password = cleaned_data.get("new_password")
+        confirm_password = cleaned_data.get("confirm_password")
 
-        if new_password1 and new_password2 and new_password1 != new_password2:
-            self.add_error('new_password2', _("The two password fields didn't match."))
-
-        if new_password1 and len(new_password1) < 8:
-            self.add_error('new_password1', _("Password must be at least 8 characters long."))
+        if new_password != confirm_password:
+            raise ValidationError("New passwords do not match.")
 
         return cleaned_data
 
 
-# users/views.py
-
-# users/forms.py
-
-from django import forms
-from .models import Profile
-
-class UserProfileUpdateForm(forms.ModelForm):
+class UpdateProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['phone_number', 'address']  # Include fields to be updated
-        widgets = { 
-            'address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+        fields = ["address", "phone_number"]
+        widgets = {
+            "address": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Address"}
+            ),
+            "phone_number": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Phone Number"}
+            ),
         }
-
-    def clean_phone_number(self):
-        phone_number = self.cleaned_data.get('phone_number')
-        # Add any custom validation for phone number here
-        return phone_number

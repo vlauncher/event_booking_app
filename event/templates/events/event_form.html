@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}{{ view.title }} Event{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2 class="text-center mb-4">{{ view.title }} Event</h2>
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="name" class="form-label">Event Name</label>
+                    <input type="text" name="name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" id="name" value="{{ form.name.value|default_if_none:'' }}">
+                    {% if form.name.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.name.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" class="form-control {% if form.category.errors %}is-invalid{% endif %}" id="category">
+                        {% for choice in form.category.field.choices %}
+                            <option value="{{ choice.0 }}" {% if form.category.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.category.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.category.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea name="notes" class="form-control {% if form.notes.errors %}is-invalid{% endif %}" id="notes">{{ form.notes.value|default_if_none:'' }}</textarea>
+                    {% if form.notes.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.notes.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="time" class="form-label">Event Time</label>
+                    <input type="datetime-local" name="time" class="form-control {% if form.time.errors %}is-invalid{% endif %}" id="time" value="{{ form.time.value|default_if_none:'' }}">
+                    {% if form.time.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.time.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="duration" class="form-label">Duration (minutes)</label>
+                    <input type="number" name="duration" class="form-control {% if form.duration.errors %}is-invalid{% endif %}" id="duration" value="{{ form.duration.value|default_if_none:'' }}">
+                    {% if form.duration.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.duration.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">{{ view.title }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

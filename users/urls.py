@@ -1,14 +1,24 @@
 from django.urls import path
-from .views import SignupView, CustomLoginView,CustomPasswordChangeView, HomeView,ListProfileView,UpdateProfileView
-from django.contrib.auth.views import LogoutView
+from .views import (
+    LoginView,
+    RegisterView,
+    HomePageView,
+    LogoutView,
+    VerifyEmailView,
+    ChangePasswordView,
+    ListProfileView,
+    UpdateProfileView,
+)
 
 urlpatterns = [
-    path('signup/', SignupView.as_view(), name='signup'),
-    path('login/', CustomLoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
-    path('password/change/', CustomPasswordChangeView.as_view(), name='changepassword'),
-    path('', HomeView.as_view(), name='home'),
-    path('profile/', ListProfileView.as_view(), name='list_profile'),
-    path('profile/update/', UpdateProfileView.as_view(), name='update_profile'),
+    path("", HomePageView.as_view(), name="home"),
+    path("login/", LoginView.as_view(), name="login"),
+    path("register/", RegisterView.as_view(), name="register"),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path(
+        "verify-email/<uidb64>/<token>/", VerifyEmailView.as_view(), name="verify_email"
+    ),
+    path("change-password/", ChangePasswordView.as_view(), name="change_password"),
+    path("profile/", ListProfileView.as_view(), name="list_profile"),
+    path("profile/update/", UpdateProfileView.as_view(), name="update_profile"),
 ]
- 

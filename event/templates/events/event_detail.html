@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Event Details{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4">{{ event.name }}</h2>
+    <p><strong>Category:</strong> {{ event.get_category_display }}</p>
+    <p><strong>Time:</strong> {{ event.time }}</p>
+    <p><strong>Duration:</strong> {{ event.duration }} minutes</p>
+    <p>{{ event.notes }}</p>
+
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'event-book' event.pk %}">
+        {% csrf_token %}
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Book Event</button>
+        </div>
+    </form>
+    {% else %}
+    <p>You need to <a href="{% url 'login' %}">login</a> to book this event.</p>
+    {% endif %}
+</div>
+{% endblock %}

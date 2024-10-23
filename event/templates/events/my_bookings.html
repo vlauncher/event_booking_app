@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4">My Bookings</h2>
+    <ul class="list-group">
+        {% for booking in bookings %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <h5>{{ booking.event.name }}</h5>
+                <p class="mb-1">
+                    <strong>Event Date:</strong> {{ booking.event.time|date:"F j, Y, g:i a" }}<br>
+                    <strong>Category:</strong> {{ booking.event.category }}<br>
+                    <strong>Notes:</strong> {{ booking.event.notes }}<br>
+                    <strong>Booking Status:</strong> 
+                    {% if booking.is_cancelled %}
+                        <span class="text-danger">Cancelled</span>
+                    {% else %}
+                        <span class="text-success">Active</span>
+                    {% endif %}
+                </p>
+                {% if booking.cancellation_reason %}
+                    <p class="text-muted mb-0"><strong>Cancel Reason:</strong> {{ booking.cancellation_reason }}</p>
+                {% endif %}
+            </div>
+            {% if not booking.is_cancelled %}
+            <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger btn-sm">Cancel Booking</a>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item text-center">You have no bookings.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
